@@ -28,6 +28,11 @@ impl Rgba32 {
         }
     }
 
+    pub fn to_rgb24(self) -> crate::Rgb24 {
+        let Self { r, g, b, a: _ } = self;
+        crate::Rgb24 { r, g, b }
+    }
+
     pub fn to_f32_array_01(self) -> [f32; 4] {
         [
             self.r as f32 / 255.,

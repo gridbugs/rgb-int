@@ -61,6 +61,10 @@ impl Rgb24 {
             b: self.b.min(max),
         }
     }
+    pub const fn to_rgba32(self, a: u8) -> crate::Rgba32 {
+        let Self { r, g, b } = self;
+        crate::Rgba32 { r, g, b, a }
+    }
     pub fn to_f32_array_01(self) -> [f32; 3] {
         [
             self.r as f32 / 255.,
