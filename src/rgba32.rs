@@ -111,10 +111,14 @@ impl Rgba32 {
         }
     }
 
-    pub fn saturating_scalar_mul_div(self, numerator: u32, denominator: u32) -> Self {
-        fn single_channel(channel: u8, numerator: u32, denominator: u32) -> u8 {
+    pub const fn saturating_scalar_mul_div(self, numerator: u32, denominator: u32) -> Self {
+        const fn single_channel(channel: u8, numerator: u32, denominator: u32) -> u8 {
             let as_u32 = ((channel as u32) * (numerator)) / denominator;
-            as_u32.min(::std::u8::MAX as u32) as u8
+            if as_u32 > ::std::u8::MAX as u32 {
+                ::std::u8::MAX
+            } else {
+                as_u32 as u8
+            }
         }
         Self {
             r: single_channel(self.r, numerator, denominator),

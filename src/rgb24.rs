@@ -80,24 +80,29 @@ impl Rgb24 {
             alpha,
         ]
     }
-    pub fn saturating_add(self, other: Self) -> Self {
+    pub const fn saturating_add(self, other: Self) -> Self {
         Self {
             r: self.r.saturating_add(other.r),
             g: self.g.saturating_add(other.g),
             b: self.b.saturating_add(other.b),
         }
     }
-    pub fn saturating_sub(self, other: Self) -> Self {
+    pub const fn saturating_sub(self, other: Self) -> Self {
         Self {
             r: self.r.saturating_sub(other.r),
             g: self.g.saturating_sub(other.g),
             b: self.b.saturating_sub(other.b),
         }
     }
-    pub fn saturating_scalar_mul(self, scalar: u32) -> Self {
-        fn single_channel(channel: u8, scalar: u32) -> u8 {
+    pub const fn saturating_scalar_mul(self, scalar: u32) -> Self {
+        const fn single_channel(channel: u8, scalar: u32) -> u8 {
             let as_u32 = channel as u32 * scalar;
-            as_u32.min(::std::u8::MAX as u32) as u8
+            if as_u32 > ::std::u8::MAX as u32 {
+                ::std::u8::MAX
+            } else {
+                as_u32 as u8
+            }
+
         }
         Self {
             r: single_channel(self.r, scalar),
@@ -105,10 +110,14 @@ impl Rgb24 {
             b: single_channel(self.b, scalar),
         }
     }
-    pub fn scalar_div(self, scalar: u32) -> Self {
-        fn single_channel(channel: u8, scalar: u32) -> u8 {
+    pub const fn scalar_div(self, scalar: u32) -> Self {
+        const fn single_channel(channel: u8, scalar: u32) -> u8 {
             let as_u32 = channel as u32 / scalar;
-            as_u32.min(::std::u8::MAX as u32) as u8
+            if as_u32 > ::std::u8::MAX as u32 {
+                ::std::u8::MAX
+            } else {
+                as_u32 as u8
+            }
         }
         Self {
             r: single_channel(self.r, scalar),
@@ -116,10 +125,14 @@ impl Rgb24 {
             b: single_channel(self.b, scalar),
         }
     }
-    pub fn saturating_scalar_mul_div(self, numerator: u32, denominator: u32) -> Self {
-        fn single_channel(channel: u8, numerator: u32, denominator: u32) -> u8 {
+    pub const fn saturating_scalar_mul_div(self, numerator: u32, denominator: u32) -> Self {
+        const fn single_channel(channel: u8, numerator: u32, denominator: u32) -> u8 {
             let as_u32 = ((channel as u32) * (numerator)) / denominator;
-            as_u32.min(::std::u8::MAX as u32) as u8
+            if as_u32 > ::std::u8::MAX as u32 {
+                ::std::u8::MAX
+            } else {
+                as_u32 as u8
+            }
         }
         Self {
             r: single_channel(self.r, numerator, denominator),
