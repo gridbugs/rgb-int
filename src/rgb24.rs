@@ -33,6 +33,12 @@ impl Rgb24 {
     pub const fn new(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b }
     }
+
+    pub const fn hex(hex: u32) -> Self {
+        let [b, g, r, _] = hex.to_le_bytes();
+        Self { r, g, b }
+    }
+
     pub const fn with_r(self, r: u8) -> Self {
         Self { r, ..self }
     }
@@ -102,7 +108,6 @@ impl Rgb24 {
             } else {
                 as_u32 as u8
             }
-
         }
         Self {
             r: single_channel(self.r, scalar),
@@ -377,5 +382,10 @@ mod test {
     #[should_panic]
     fn weighted_mean_zero() {
         Rgb24::new(1, 2, 3).weighted_mean_u16(WeightsU16::new(0, 0, 0));
+    }
+
+    #[test]
+    fn hex() {
+        assert_eq!(Rgb24::hex(0x123456), Rgb24::new(0x12, 0x34, 0x56));
     }
 }

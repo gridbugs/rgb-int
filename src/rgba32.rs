@@ -28,7 +28,17 @@ impl Rgba32 {
         }
     }
 
-    pub fn to_rgb24(self) -> crate::Rgb24 {
+    pub const fn hex(hex: u32) -> Self {
+        let [a, b, g, r] = hex.to_le_bytes();
+        Self { r, g, b, a }
+    }
+
+    pub const fn hex_rgb(hex: u32) -> Self {
+        let [b, g, r, _] = hex.to_le_bytes();
+        Self { r, g, b, a: 255 }
+    }
+
+    pub const fn to_rgb24(self) -> crate::Rgb24 {
         let Self { r, g, b, a: _ } = self;
         crate::Rgb24 { r, g, b }
     }
@@ -175,5 +185,15 @@ mod test {
             from.linear_interpolate(to, 63),
             Rgba32::new(63, 192, 104, 127)
         );
+    }
+
+    #[test]
+    fn hex() {
+        assert_eq!(Rgba32::hex(0x12345678), Rgba32::new(0x12, 0x34, 0x56, 0x78));
+    }
+
+    #[test]
+    fn hex_rgb() {
+        assert_eq!(Rgba32::hex_rgb(0x123456), Rgba32::new_rgb(0x12, 0x34, 0x56));
     }
 }
