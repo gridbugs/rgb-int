@@ -151,6 +151,195 @@ impl Rgba32 {
     }
 }
 
+#[cfg(feature = "rand")]
+mod sample {
+    use super::Rgba32;
+    use rand::distributions::uniform::{SampleBorrow, SampleUniform, UniformInt, UniformSampler};
+    use rand::prelude::*;
+
+    pub struct UniformRgba32LinearInterpolate {
+        inner: UniformInt<u8>,
+        low: Rgba32,
+        high: Rgba32,
+    }
+
+    impl UniformSampler for UniformRgba32LinearInterpolate {
+        type X = Rgba32;
+        fn new<B1, B2>(low: B1, high: B2) -> Self
+        where
+            B1: SampleBorrow<Self::X> + Sized,
+            B2: SampleBorrow<Self::X> + Sized,
+        {
+            Self {
+                inner: UniformInt::<u8>::new(::std::u8::MIN, ::std::u8::MAX),
+                low: *low.borrow(),
+                high: *high.borrow(),
+            }
+        }
+        fn new_inclusive<B1, B2>(low: B1, high: B2) -> Self
+        where
+            B1: SampleBorrow<Self::X> + Sized,
+            B2: SampleBorrow<Self::X> + Sized,
+        {
+            UniformSampler::new(low, high)
+        }
+        fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
+            self.low
+                .linear_interpolate(self.high, self.inner.sample(rng))
+        }
+    }
+
+    impl SampleUniform for Rgba32 {
+        type Sampler = UniformRgba32LinearInterpolate;
+    }
+}
+
+#[cfg(feature = "rand")]
+pub use sample::UniformRgba32LinearInterpolate;
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn add() {
+        let a = Rgb24::new(255, 0, 200);
+        let b = Rgb24::new(0, 255, 200);
+        let c = a.saturating_add(b);
+        assert_eq!(c, Rgb24::new(255, 255, 255));
+    }
+
+    #[test]
+    fn sub() {
+        let a = Rgb24::new(255, 0, 200);
+        let b = Rgb24::new(0, 255, 200);
+        let c = a.saturating_sub(b);
+        assert_eq!(c, Rgb24::new(255, 0, 0));
+    }
+
+    #[test]
+    fn mul_div() {
+        assert_eq!(
+            Rgb24::new(1, 2, 3).saturating_scalar_mul_div(1500, 1000),
+            Rgb24::new(1, 3, 4)
+        );
+        assert_eq!(
+            Rgb24::new(1, 2, 3).saturating_scalar_mul_div(1500, 1),
+            Rgb24::new(255, 255, 255)
+        );
+    }
+
+    #[test]
+    fn mul() {
+        assert_eq!(
+            Rgb24::new(20, 40, 60).saturating_scalar_mul(2),
+            Rgb24::new(40, 80, 120),
+        );
+        assert_eq!(
+            Rgb24::new(20, 40, 60).saturating_scalar_mul(10000),
+            Rgb24::new(255, 255, 255),
+        );
+    }
+
+    #[test]
+    fn div() {
+        assert_eq!(Rgb24::new(20, 40, 60).scalar_div(2), Rgb24::new(10, 20, 30));
+        assert_eq!(
+            Rgb24::new(255, 255, 255).scalar_div(256),
+            Rgb24::new(0, 0, 0)
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn div_by_zero() {
+        Rgb24::new(0, 0, 0).scalar_div(0);
+    }
+
+    #[test]
+    fn normalised_mul() {
+        assert_eq!(
+            Rgb24::new(255, 255, 255).normalised_mul(Rgb24::new(1, 2, 3)),
+            Rgb24::new(1, 2, 3)
+        );
+        assert_eq!(
+            Rgb24::new(255, 127, 0).normalised_mul(Rgb24::new(10, 20, 30)),
+            Rgb24::new(10, 9, 0)
+        );
+    }
+
+    #[test]
+    fn grey() {
+        assert_eq!(Rgb24::new_grey(37), Rgb24::new(37, 37, 37));
+    }
+
+    #[test]
+    fn floor() {
+        assert_eq!(Rgb24::new(100, 5, 0).floor(10), Rgb24::new(100, 10, 10));
+    }
+
+    #[test]
+    fn ceil() {
+        assert_eq!(Rgb24::new(255, 250, 20).ceil(200), Rgb24::new(200, 200, 20));
+    }
+
+    #[test]
+    fn normalised_scalar_mul() {
+        assert_eq!(
+            Rgb24::new(255, 128, 0).normalised_scalar_mul(128),
+            Rgb24::new(128, 64, 0)
+        );
+    }
+
+    #[test]
+    fn interpolate() {
+        let from = Rgb24::new(0, 255, 100);
+        let to = Rgb24::new(255, 0, 120);
+        assert_eq!(from.linear_interpolate(to, 0), from);
+        assert_eq!(from.linear_interpolate(to, 255), to);
+        assert_eq!(from.linear_interpolate(to, 63), Rgb24::new(63, 192, 104));
+    }
+
+    #[test]
+    fn weighted_mean() {
+        assert_eq!(
+            Rgb24::new(14, 120, 201).weighted_mean_u16(WeightsU16::new(0, 0, 1)),
+            201
+        );
+        assert_eq!(
+            Rgb24::new(14, 120, 201).weighted_mean_u16(WeightsU16::new(299, 587, 114)),
+            97
+        );
+        assert_eq!(
+            Rgb24::new(0, 0, 0).weighted_mean_u16(WeightsU16::new(299, 587, 114)),
+            0
+        );
+        assert_eq!(
+            Rgb24::new(255, 255, 255).weighted_mean_u16(WeightsU16::new(299, 587, 114)),
+            255
+        );
+        assert_eq!(
+            Rgb24::new(255, 255, 255).weighted_mean_u16(WeightsU16::new(
+                std::u16::MAX,
+                std::u16::MAX,
+                std::u16::MAX
+            )),
+            255
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn weighted_mean_zero() {
+        Rgb24::new(1, 2, 3).weighted_mean_u16(WeightsU16::new(0, 0, 0));
+    }
+
+    #[test]
+    fn hex() {
+        assert_eq!(Rgb24::hex(0x123456), Rgb24::new(0x12, 0x34, 0x56));
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
