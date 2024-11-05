@@ -115,6 +115,21 @@ impl Rgb24 {
             b: single_channel(self.b, scalar),
         }
     }
+    pub fn saturating_scalar_mul_f64(self, scalar: f64) -> Self {
+        fn single_channel(channel: u8, scalar: f64) -> u8 {
+            let as_f64 = channel as f64 * scalar;
+            if as_f64 > ::std::u8::MAX as f64 {
+                ::std::u8::MAX
+            } else {
+                as_f64 as u8
+            }
+        }
+        Self {
+            r: single_channel(self.r, scalar),
+            g: single_channel(self.g, scalar),
+            b: single_channel(self.b, scalar),
+        }
+    }
     pub const fn scalar_div(self, scalar: u32) -> Self {
         const fn single_channel(channel: u8, scalar: u32) -> u8 {
             let as_u32 = channel as u32 / scalar;
