@@ -124,8 +124,8 @@ impl Rgba32 {
     pub const fn saturating_scalar_mul_div(self, numerator: u32, denominator: u32) -> Self {
         const fn single_channel(channel: u8, numerator: u32, denominator: u32) -> u8 {
             let as_u32 = ((channel as u32) * (numerator)) / denominator;
-            if as_u32 > ::std::u8::MAX as u32 {
-                ::std::u8::MAX
+            if as_u32 > u8::MAX as u32 {
+                u8::MAX
             } else {
                 as_u32 as u8
             }
@@ -171,7 +171,7 @@ mod sample {
             B2: SampleBorrow<Self::X> + Sized,
         {
             Self {
-                inner: UniformInt::<u8>::new(::std::u8::MIN, ::std::u8::MAX),
+                inner: UniformInt::<u8>::new(::std::u8::MIN, u8::MAX),
                 low: *low.borrow(),
                 high: *high.borrow(),
             }
