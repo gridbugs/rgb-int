@@ -219,7 +219,7 @@ impl Rgb24 {
 #[cfg(feature = "rand")]
 mod sample {
     use super::Rgb24;
-    use rand::distributions::uniform::{SampleBorrow, SampleUniform, UniformInt, UniformSampler};
+    use rand::distr::uniform::{Error, SampleBorrow, SampleUniform, UniformInt, UniformSampler};
     use rand::prelude::*;
 
     pub struct UniformRgb24LinearInterpolate {
@@ -230,18 +230,18 @@ mod sample {
 
     impl UniformSampler for UniformRgb24LinearInterpolate {
         type X = Rgb24;
-        fn new<B1, B2>(low: B1, high: B2) -> Self
+        fn new<B1, B2>(low: B1, high: B2) -> Result<Self, Error>
         where
             B1: SampleBorrow<Self::X> + Sized,
             B2: SampleBorrow<Self::X> + Sized,
         {
-            Self {
-                inner: UniformInt::<u8>::new(::std::u8::MIN, u8::MAX),
+            Ok(Self {
+                inner: UniformInt::<u8>::new(u8::MIN, u8::MAX)?,
                 low: *low.borrow(),
                 high: *high.borrow(),
-            }
+            })
         }
-        fn new_inclusive<B1, B2>(low: B1, high: B2) -> Self
+        fn new_inclusive<B1, B2>(low: B1, high: B2) -> Result<Self, Error>
         where
             B1: SampleBorrow<Self::X> + Sized,
             B2: SampleBorrow<Self::X> + Sized,
